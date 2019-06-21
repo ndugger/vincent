@@ -42,7 +42,7 @@ export default class Uniform {
         }
         else if (this.type === 'sampler') {
             this.texture.set(program.canvas.context, values);
-            program.canvas.context.uniform1i(this.location, Texture.unit(this.texture));
+            program.canvas.context.uniform1i(this.location, this.texture.unit);
         }
         else {
             const type = (this.type.match(/(.)vec/) || [ , 'f' ])[ 1 ];

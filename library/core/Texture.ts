@@ -4,9 +4,9 @@ export default class Texture {
         return texture.unit;
     }
 
-    private size: number;
-    private texture: WebGLTexture;
-    private unit: number;
+    public readonly size: number;
+    public readonly texture: WebGLTexture;
+    public readonly unit: number;
 
     public constructor(size: number, texture: WebGLTexture, unit: number) {
         this.size = size;
