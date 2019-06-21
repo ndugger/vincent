@@ -1,0 +1,26 @@
+{
+  "name": "vincent",
+  "version": "1.0.0",
+  "description": "Lightweight WebGL Wrapper",
+  "main": "index.ts",
+  "scripts": {
+    "build": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ndugger/vincent.git"
+  },
+  "author": "Nick Dugger",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ndugger/vincent/issues"
+  },
+  "homepage": "https://github.com/ndugger/vincent#readme",
+  "devDependencies": {
+    "@types/webgl2": "0.0.4",
+    "ts-loader": "^5.3.3",
+    "typescript": "^3.4.5",
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.3.0"
+  }
+}
