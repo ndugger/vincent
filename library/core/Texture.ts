@@ -4,13 +4,13 @@ export default class Texture {
         return texture.unit;
     }
 
+    public readonly bound: WebGLTexture;
     public readonly size: number;
-    public readonly texture: WebGLTexture;
     public readonly unit: number;
 
-    public constructor(size: number, texture: WebGLTexture, unit: number) {
+    public constructor(size: number, bound: WebGLTexture, unit: number) {
+        this.bound = bound;
         this.size = size;
-        this.texture = texture;
         this.unit = unit;
     }
 
@@ -149,7 +149,7 @@ export default class Texture {
 
         switch (this.size) {
             case 2: {
-                gl.bindTexture(gl.TEXTURE_2D, this.texture);
+                gl.bindTexture(gl.TEXTURE_2D, this.bound);
                 gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
                 gl.texImage2D(
                     gl.TEXTURE_2D,
