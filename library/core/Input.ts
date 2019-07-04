@@ -19,7 +19,7 @@ export default class Input {
     }
 
     public enable(program: Program): void {
-        program.canvas.context.enableVertexAttribArray(this.location);
+        program.gl.enableVertexAttribArray(this.location);
     }
 
     public exists(): boolean {
@@ -27,23 +27,23 @@ export default class Input {
     }
 
     public locate(program: Program): void {
-        this.location = program.canvas.context.getAttribLocation(program.webgl, this.id)
+        this.location = program.gl.getAttribLocation(program.ptr, this.id)
     }
 
-    public set(program: Program, values: any): void {
-        program.canvas.context.bindBuffer(program.canvas.context.ARRAY_BUFFER, this.buffer);
-        program.canvas.context.bufferData(
-            program.canvas.context.ARRAY_BUFFER,
-            values,
-            program.canvas.context.STATIC_DRAW
+    public set(program: Program, values: unknown): void {
+        program.gl.bindBuffer(program.gl.ARRAY_BUFFER, this.buffer);
+        program.gl.bufferData(
+            program.gl.ARRAY_BUFFER,
+            values as ArrayBufferView,
+            program.gl.STATIC_DRAW
         );
 
         switch (true) {
             case values instanceof Int8Array: {
-                program.canvas.context.vertexAttribPointer(
+                program.gl.vertexAttribPointer(
                     this.location,
                     this.size,
-                    program.canvas.context.BYTE,
+                    program.gl.BYTE,
                     false,
                     0,
                     0
@@ -51,10 +51,10 @@ export default class Input {
                 break;
             }
             case values instanceof Int16Array: {
-                program.canvas.context.vertexAttribPointer(
+                program.gl.vertexAttribPointer(
                     this.location,
                     this.size,
-                    program.canvas.context.SHORT,
+                    program.gl.SHORT,
                     false,
                     0,
                     0
@@ -62,20 +62,20 @@ export default class Input {
                 break;
             }
             case values instanceof Uint8Array: {
-                program.canvas.context.vertexAttribPointer(
+                program.gl.vertexAttribPointer(
                     this.location,
                     this.size,
-                    program.canvas.context.UNSIGNED_BYTE,
+                    program.gl.UNSIGNED_BYTE,
                     false,
                     0,
                     0
                 );
             }
             case values instanceof Uint16Array: {
-                program.canvas.context.vertexAttribPointer(
+                program.gl.vertexAttribPointer(
                     this.location,
                     this.size,
-                    program.canvas.context.UNSIGNED_SHORT,
+                    program.gl.UNSIGNED_SHORT,
                     false,
                     0,
                     0
@@ -83,10 +83,10 @@ export default class Input {
                 break;
             }
             case values instanceof Float32Array: {
-                program.canvas.context.vertexAttribPointer(
+                program.gl.vertexAttribPointer(
                     this.location,
                     this.size,
-                    program.canvas.context.FLOAT,
+                    program.gl.FLOAT,
                     false,
                     0,
                     0

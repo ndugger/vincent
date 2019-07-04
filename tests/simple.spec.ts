@@ -1,53 +1,75 @@
-import Canvas from '../library/Canvas';
 import Program from '../library/Program';
 import Shader from '../library/Shader';
 
-const canvas = new Canvas(640, 480);
-const image = new Image();
-const program = new Program(canvas, [
-    new Shader.Vertex(`
-        in vec2 i_Position;
-        in vec2 i_Sample;
-        uniform vec2 u_Resolution;
+const canvas = Object.assign(document.createElement('canvas'), { height: 480, width: 640 });
+const gl = canvas.getContext('webgl2');
 
-        out vec2 o_Sample;
+document.body.append(canvas);
 
-        void main () {
-            vec2 one = i_Position / u_Resolution;
-            vec2 two = one * 2.0;
-            vec2 clip = two - 1.0;
-            vec2 flip = vec2(1.0, -1.0);
+interface VertexInputs {
+    i_Points: Float32Array;
+    i_Sample: Float32Array;
+}
 
-            gl_Position = vec4(clip * flip, 0.0, 1.0);
-            o_Sample = i_Sample;
-        }
-    `),
-    new Shader.Fragment(`
-        precision mediump float;
+interface VertexUniforms {
+    u_Resolution: Float32Array;
+}
 
-        in vec2 o_Sample;
-        uniform sampler2D u_Texture;
+interface FragmentUniforms {
+    u_Texture: ImageBitmapSource;
+}
 
-        out vec4 o_Color;
+const vertex = new Shader.Vertex<VertexInputs, VertexUniforms>(`
+    in vec2 i_Points;
+    in vec2 i_Sample;
 
-        void main () {
-            o_Color = texture(u_Texture, o_Sample);
-        }
-    `)
-]);
+    uniform vec2 u_Resolution;
+
+    out vec2 o_Sample;
+
+    void main () {
+        vec2 one = i_Points / u_Resolution;
+        vec2 two = one * 2.0;
+        vec2 clip = two - 1.0;
+        vec2 flip = vec2(1.0, -1.0);
+
+        gl_Position = vec4(clip * flip, 0.0, 1.0);
+        o_Sample = i_Sample;
+    }
+`);
+
+const fragment = new Shader.Fragment<{}, FragmentUniforms>(`
+    precision mediump float;
+
+    in vec2 o_Sample;
+
+    uniform sampler2D u_Texture;
+
+    out vec4 o_Color;
+
+    void main () {
+        o_Color = texture(u_Texture, o_Sample);
+    }
+`);
+
+const program = new Program(gl, { fragment, vertex });
 
 program.compile();
 program.use();
 
+program.setViewport(canvas.width, canvas.height);
+
 program.setUniform('u_Resolution', new Float32Array([
-    program.canvas.element.width,
-    program.canvas.element.height
+    canvas.width,
+    canvas.height
 ]));
+
+const image = new Image();
 
 image.onload = () => {
     program.setUniform('u_Texture', image);
 
-    program.setInput('i_Position', new Float32Array([
+    program.setInput('i_Points', new Float32Array([
         0, 0,
         image.width, 0,
         0, image.height,
@@ -65,10 +87,8 @@ image.onload = () => {
         1, 1
     ]));
 
-    canvas.clear(0, 0, 0, 1);
-    canvas.drawTriangles(0, 6);
+    program.clear(0, 0, 0, 1);
+    program.drawTriangles(0, 6);
 };
 
 image.src = './tests/assets/troll.png';
-
-document.body.append(canvas.element);
