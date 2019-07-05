@@ -57,7 +57,7 @@ const program = new Program(gl, { fragment, vertex });
 program.compile();
 program.use();
 
-program.setViewport(canvas.width, canvas.height);
+program.setViewport(0, 0, canvas.width, canvas.height);
 
 program.setUniform('u_Resolution', new Float32Array([
     canvas.width,

@@ -99,8 +99,8 @@ export default class Program<
         }
     }
 
-    public setViewport(width: number, height: number): void {
-        this.gl.viewport(0, 0, width, height);
+    public setViewport(x: number, y: number, width: number, height: number): void {
+        this.gl.viewport(x, y, width, height);
     }
 
     public use(): void {
