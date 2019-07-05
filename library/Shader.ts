@@ -4,16 +4,16 @@ import Uniform from './core/Uniform';
 
 import Program from './Program';
 
-export default class Shader<Inputs extends object, Uniforms extends object> {
+export default class Shader<Inputs extends object = any, Uniforms extends object = any> {
 
-    public static readonly Fragment = class FragmentShader<Inputs extends object, Uniforms extends object> extends Shader<Inputs, Uniforms> {
+    public static readonly Fragment = class FragmentShader<Inputs extends object = any, Uniforms extends object = any> extends Shader<Inputs, Uniforms> {
 
         public constructor(glsl: string, upgrade = true) {
             super('fragment', glsl, upgrade);
         }
     };
 
-    public static readonly Vertex = class VertexShader<Inputs extends object, Uniforms extends object> extends Shader<Inputs, Uniforms> {
+    public static readonly Vertex = class VertexShader<Inputs extends object = any, Uniforms extends object = any> extends Shader<Inputs, Uniforms> {
 
         public constructor(glsl: string, upgrade = true) {
             super('vertex', glsl, upgrade);
