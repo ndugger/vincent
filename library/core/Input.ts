@@ -1,6 +1,6 @@
 import Program from '../Program';
 
-export default class Input {
+export default class Input<Value> {
 
     public static readonly pattern = /in (.+? )?(.+?) (.+?);/;
 
@@ -9,6 +9,8 @@ export default class Input {
     private location: number;
     private size: number;
     private type: string;
+
+    public readonly valueType: Value;
 
     public constructor(buffer: WebGLBuffer, id: string, size: number, type: string) {
         this.buffer = buffer;
@@ -30,16 +32,16 @@ export default class Input {
         this.location = program.gl.getAttribLocation(program.ptr, this.id)
     }
 
-    public set(program: Program, values: unknown): void {
+    public set(program: Program, value: Value): void {
         program.gl.bindBuffer(program.gl.ARRAY_BUFFER, this.buffer);
         program.gl.bufferData(
             program.gl.ARRAY_BUFFER,
-            values as ArrayBufferView,
+            value as any,
             program.gl.STATIC_DRAW
         );
 
         switch (true) {
-            case values instanceof Int8Array: {
+            case value instanceof Int8Array: {
                 program.gl.vertexAttribPointer(
                     this.location,
                     this.size,
@@ -50,7 +52,7 @@ export default class Input {
                 );
                 break;
             }
-            case values instanceof Int16Array: {
+            case value instanceof Int16Array: {
                 program.gl.vertexAttribPointer(
                     this.location,
                     this.size,
@@ -61,7 +63,7 @@ export default class Input {
                 );
                 break;
             }
-            case values instanceof Uint8Array: {
+            case value instanceof Uint8Array: {
                 program.gl.vertexAttribPointer(
                     this.location,
                     this.size,
@@ -71,7 +73,7 @@ export default class Input {
                     0
                 );
             }
-            case values instanceof Uint16Array: {
+            case value instanceof Uint16Array: {
                 program.gl.vertexAttribPointer(
                     this.location,
                     this.size,
@@ -82,7 +84,7 @@ export default class Input {
                 );
                 break;
             }
-            case values instanceof Float32Array: {
+            case value instanceof Float32Array: {
                 program.gl.vertexAttribPointer(
                     this.location,
                     this.size,

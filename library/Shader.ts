@@ -27,9 +27,15 @@ export default class Shader<Inputs extends object = any, Uniforms extends object
     private unit: number;
     private upgrade: boolean;
 
-    public readonly inputs: Map<Program<Inputs, Uniforms, Inputs, Uniforms>, Map<keyof Inputs, Input>>;
     public readonly type: string;
-    public readonly uniforms: Map<Program<Inputs, Uniforms, Inputs, Uniforms>, Map<keyof Uniforms, Uniform>>;
+
+    public readonly inputs: {
+        [ Id in keyof Inputs ]: Input<Inputs[ Id ]>;
+    };
+
+    public readonly uniforms: {
+        [ Id in keyof Uniforms ]: Uniform<Uniforms[ Id ]>;
+    };
 
     public get ptr(): WebGLShader {
         return this.compiled;
@@ -38,20 +44,32 @@ export default class Shader<Inputs extends object = any, Uniforms extends object
     public constructor(type: string, glsl: string, upgrade = true) {
         this.compiled = null;
         this.glsl = glsl;
-        this.inputs = new Map();
-        this.type = type;
-        this.uniforms = new Map();
         this.unit = 0;
         this.upgrade = upgrade;
+
+        this.type = type;
+
+        this.inputs = {} as {
+            [ Id in keyof Inputs ]: Input<Inputs[ Id ]>;
+        };
+
+        this.uniforms = {} as {
+            [ Id in keyof Uniforms ]: Uniform<Uniforms[ Id ]>;
+        };
     }
 
-    public compile(program: Program<Inputs, Uniforms, Inputs, Uniforms>): void {
-        const shader = program.gl.createShader(program.gl[ `${ this.type.toUpperCase() }_SHADER` ]);
-        const inputs = this.glsl.match(new RegExp(Input.pattern, 'g'));
-        const uniforms = this.glsl.match(new RegExp(Uniform.pattern, 'g'));
+    public compile(program: Program): void {
+        let shader: WebGLShader;
 
-        this.inputs.set(program, new Map());
-        this.uniforms.set(program, new Map());
+        if (this.type.toUpperCase() === 'FRAGMENT') {
+            shader = program.gl.createShader(program.gl.FRAGMENT_SHADER);
+        }
+        else if (this.type.toUpperCase() === 'VERTEX') {
+            shader = program.gl.createShader(program.gl.VERTEX_SHADER);
+        }
+        else {
+            throw new Error(`Unsupported shader type: ${ this.type }`);
+        }
 
         if (this.upgrade) {
             this.glsl = `${ Shader.upgrade }${ this.glsl }`;
@@ -65,13 +83,16 @@ export default class Shader<Inputs extends object = any, Uniforms extends object
             throw new Error('Unable to compile shader: Please verify that your GLSL is valid');
         }
 
+        const inputs = this.glsl.match(new RegExp(Input.pattern, 'g'));
+        const uniforms = this.glsl.match(new RegExp(Uniform.pattern, 'g'));
+
         if (inputs) for (const input of inputs) {
             const buffer = program.gl.createBuffer();
             const [ , , definition, id ] = input.match(Input.pattern);
             const size = Number.parseInt(definition.match(/\d+/)[ 0 ], 10);
             const type = definition.match(/(.+?)\d+/)[ 1 ];
 
-            this.inputs.get(program).set(id as keyof Inputs, new Input(buffer, id, size, type));
+            this.inputs[ id ] = new Input(buffer, id, size, type);
         }
 
         if (uniforms) for (const uniform of uniforms) {
@@ -80,7 +101,7 @@ export default class Shader<Inputs extends object = any, Uniforms extends object
             const texture = definition.match(/sampler/) ? new Texture(size, program.gl.createTexture(), this.unit++) : null;
             const type = definition.match(/(.+?)\d+/)[ 1 ];
 
-            this.uniforms.get(program).set(id as keyof Uniforms, new Uniform(id, size, texture, type));
+            this.uniforms[ id ] = new Uniform(id, size, texture, type);
         }
 
         this.compiled = shader;

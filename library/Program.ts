@@ -1,16 +1,23 @@
 import Shader from './Shader';
 
-export default class Program<
-    FSInputs extends object = any,
-    FSUniforms extends object = any,
-    VSInputs extends object = FSInputs,
-    VSUniforms extends object = FSUniforms> {
+type KeyOfParameters<Program extends any, Parameters extends string> =
+    keyof Program[ 'shaders' ][ 'fragment' ][ Parameters ] |
+    keyof Program[ 'shaders' ][ 'vertex' ][ Parameters ];
+
+type ValueOfParameter<Program extends any, Parameters extends string, Id extends string> =
+    Id extends keyof Program[ 'shaders' ][ 'fragment' ][ Parameters ]
+        ? Program[ 'shaders' ][ 'fragment' ][ Parameters ][ Id ][ 'valueType' ]
+        : Id extends keyof Program[ 'shaders' ][ 'vertex' ][ Parameters ]
+            ? Program[ 'shaders' ][ 'vertex' ][ Parameters ][ Id ][ 'valueType' ]
+            : unknown;
+
+export default class Program<FragmentShader extends Shader = any, VertexShader extends Shader = any> {
 
     private context: WebGL2RenderingContext;
     private linked: WebGLProgram;
     private shaders: {
-        fragment: Shader<FSInputs, FSUniforms>;
-        vertex: Shader<VSInputs, VSUniforms>;
+        fragment: FragmentShader;
+        vertex: VertexShader;
     };
 
     public get gl() {
@@ -21,7 +28,7 @@ export default class Program<
         return this.linked;
     }
 
-    public constructor(context: WebGL2RenderingContext, shaders: { fragment: Shader<FSInputs, FSUniforms>, vertex: Shader<VSInputs, VSUniforms> }) {
+    public constructor(context: WebGL2RenderingContext, shaders: { fragment: FragmentShader, vertex: VertexShader }) {
         this.context = context;
         this.shaders = shaders;
     }
@@ -35,25 +42,34 @@ export default class Program<
         this.linked = this.gl.createProgram();
 
         for (const shader of Object.values(this.shaders)) {
-            shader.compile(this as Program);
+            shader.compile(this);
             this.gl.attachShader(this.ptr, shader.ptr);
         }
 
         this.gl.linkProgram(this.ptr);
 
-        for (const shader of Object.values(this.shaders)) {
+        for (const input of Object.values(this.shaders.fragment.inputs)) {
+            input.locate(this);
 
-            for (const input of shader.inputs.get(this as Program).values()) {
-                input.locate(this);
-
-                if (input.exists()) {
-                    input.enable(this);
-                }
+            if (input.exists()) {
+                input.enable(this);
             }
+        }
 
-            for (const uniform of shader.uniforms.get(this as Program).values()) {
-                uniform.locate(this);
+        for (const uniform of Object.values(this.shaders.fragment.uniforms)) {
+            uniform.locate(this);
+        }
+
+        for (const input of Object.values(this.shaders.vertex.inputs)) {
+            input.locate(this);
+
+            if (input.exists()) {
+                input.enable(this);
             }
+        }
+
+        for (const uniform of Object.values(this.shaders.vertex.uniforms)) {
+            uniform.locate(this);
         }
     }
 
@@ -85,22 +101,30 @@ export default class Program<
         this.gl.drawArrays(this.gl.TRIANGLES, first, count);
     }
 
-    public setInput<Id extends (keyof FSInputs | keyof VSInputs)>(id: Id, value: FSInputs[ Id & keyof FSInputs ] |  VSInputs[ Id & keyof VSInputs ]): void {
+    public setInput<Id extends KeyOfParameters<this, 'inputs'> & string>(id: Id, value: ValueOfParameter<this, 'inputs', Id>): void {
 
-        for (const shader of Object.values(this.shaders)) if (shader.inputs.get(this as Program).has(id as keyof object)) {
-            shader.inputs.get(this as Program).get(id as keyof object).set(this, value);
+        if (id in this.shaders.fragment.inputs) {
+            this.shaders.fragment.inputs[ id ].set(this, value);
+        }
+
+        if (id in this.shaders.vertex.inputs) {
+            this.shaders.vertex.inputs[ id ].set(this, value);
         }
     }
 
-    public setUniform<Id extends (keyof FSUniforms | keyof VSUniforms)>(id: Id, value: FSUniforms[ Id & keyof FSUniforms ] | VSUniforms[ Id & keyof VSUniforms ]): void {
+    public setUniform<Id extends KeyOfParameters<this, 'uniforms'> & string>(id: Id, value: ValueOfParameter<this, 'uniforms', Id>): void {
 
-        for (const shader of Object.values(this.shaders)) if (shader.uniforms.get(this as Program).has(id as keyof object)) {
-            shader.uniforms.get(this as Program).get(id as keyof object).set(this, value);
+        if (id in this.shaders.fragment.uniforms) {
+            this.shaders.fragment.uniforms[ id ].set(this, value);
+        }
+
+        if (id in this.shaders.vertex.uniforms) {
+            this.shaders.vertex.uniforms[ id ].set(this, value);
         }
     }
 
     public setViewport(x: number, y: number, width: number, height: number): void {
-        this.gl.viewport(x, y, width, height);
+        this.gl.viewport(x, y, x + width, y + height);
     }
 
     public use(): void {
